@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cart - Shoe Money</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Poppins', sans-serif;
+        }
+        .cart-container {
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 30px;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+        }
+        .cart-title {
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 24px;
+            font-weight: bold;
+        }
+        .btn-custom {
+            background-color: #f8c146;
+            color: #000;
+            border-radius: 8px;
+            padding: 10px 20px;
+            width: 100%;
+            transition: background 0.3s ease-in-out;
+            font-size: 16px;
+        }
+        .btn-custom:hover {
+            background-color: #e0a800;
+        }
+    </style>
+</head>
+<body>
+    <div class="cart-container">
+        <h2 class="cart-title">Shopping Cart</h2>
+        <ul id="cartItems" class="list-group mb-3"></ul>
+        <p><strong>Total:</strong> <span id="cartTotal">₹0.00</span></p>
+
+        <button id="checkoutButton" class="btn btn-custom mt-3">Proceed to Checkout</button>
+        <a href="home.html" class="btn btn-secondary mt-2 w-100">Back to Home</a>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function updateCartTotal() {
+    let total = 0;
+    let cartItems = JSON.parse(sessionStorage.getItem("cartItems")) || [];
+
+            cartList.innerHTML = "";
+            cartItems.forEach((item, index) => {
+                total += parseFloat(item.price);
+                let li = document.createElement("li");
+                li.className = "list-group-item d-flex justify-content-between align-items-center";
+                li.innerHTML = `${item.name} - ₹${item.price} <button class="btn btn-danger btn-sm" onclick="removeFromCart(${index})">Remove</button>`;
+                cartList.appendChild(li);
+            });
+
+            document.getElementById("cartTotal").textContent = "₹" + total.toFixed(2);
+            sessionStorage.setItem("cartTotal", total.toFixed(2));
+        });
+		
+		
+
+    cartItems.forEach(item => {
+        total += item.price * item.quantity;
+    });
+
+    document.getElementById("cartTotal").textContent = "₹" + total.toFixed(2);
+    sessionStorage.setItem("cartTotal", total.toFixed(2)); // Store total properly
+}
+
+        function removeFromCart(index) {
+            let cartItems = JSON.parse(sessionStorage.getItem("cartItems")) || [];
+            cartItems.splice(index, 1);
+            sessionStorage.setItem("cartItems", JSON.stringify(cartItems));
+            location.reload();
+        }
+
+        document.getElementById("checkoutButton").addEventListener("click", function() {
+    let cartItems = JSON.parse(sessionStorage.getItem("cartItems")) || [];
+    let total = sessionStorage.getItem("cartTotal") || "0.00";
+    let customerid = sessionStorage.getItem("id");
+
+    if (!customerid) {
+        alert("Please log in to proceed.");
+        window.location.href = "login.html"; // Redirects to login if not logged in
+        return;
+    }
+	
+
+    if (cartItems.length === 0) {
+        alert("Your cart is empty!");
+        return;
+    }
+
+    fetch("http://localhost:5075/api/orders/save-order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            customer_id: customerid,
+			total_price: total,  // ✅ Matches the C# model
+			paymentMethod: "Cash on Delivery",
+			address: "123 Street, City",
+			phone: "9876543210"
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        alert(data.message);
+        sessionStorage.removeItem("cartItems");
+        sessionStorage.removeItem("cartTotal");
+        window.location.href = "checkout.html"; // ✅ Redirects to checkout.html
+    })
+    .catch(error => {
+        console.error("Error:", error);
+        alert("Order processing failed. Please try again.");
+    });
+});
+
+    </script>
+</body>
+</html>
